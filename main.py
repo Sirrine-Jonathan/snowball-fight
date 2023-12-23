@@ -7,10 +7,20 @@ import random
 
 # pygame setup
 pygame.init()
+pygame.display.set_caption('Snowball Fight')
 screen = pygame.display.set_mode((900, 506))
 clock = pygame.time.Clock()
 running = True
 dt = 0
+isGameOver = False
+
+
+pygame.font.init()
+gameOverFont = pygame.font.SysFont('Comic Sans MS', 30)
+otherFont = pygame.font.SysFont('Comic Sans MS', 20)
+gameOverText = gameOverFont.render('Game Over', False, (0, 0, 0))
+winnerText = otherFont.render('You Win', False, (0, 0, 0))
+loserText = otherFont.render('You Lose', False, (0, 0, 0))
 
 class Object:
     vel = 100
@@ -103,12 +113,12 @@ def isHit(obj1, obj2):
 class Snowball(Object):
     damage = 10
     gravity = 1
-    speed_hor = 7
+    speed_hor = 10
     speed_ver = 7
     isDead = False
     isEnemy = 'enemy'
     plot = []
-    size = 5
+    size = 8
     color = 'white'
 
     def __init__(self, x, y, vel, dieY = False, isRed = False):
@@ -148,7 +158,7 @@ class Snowball(Object):
         while (self.move()):
             pass
         for pos in self.plot:
-            pygame.draw.circle(screen, 'grey', pos, self.size)
+            pygame.draw.circle(screen, 'grey', pos, self.size / 2)
 
 
 
@@ -161,8 +171,9 @@ class Person(Object):
     isDead = False
     isCharging = False
     check_count = 0
-    initial_max_check = 80
+    initial_max_check = random.randrange(70, 90)
     max_check = initial_max_check
+    throw_check = random.randrange(30, 90, 10)
 
     def __init__(self, color = 'red', size = 15):
         super().__init__(color, size)
@@ -243,7 +254,7 @@ class Person(Object):
         if (self.x_moving or self.y_moving):
             self.max_check = self.initial_max_check
         else:
-            self.max_check = 40
+            self.max_check = random.randrange(30, 80)
         if (bool(random.getrandbits(1))):
             self.chargeThrow(1)
         if (self.check_count % 50 == 0 and random.getrandbits(1)):
@@ -251,13 +262,17 @@ class Person(Object):
 
 
 
-redTeam = [Person('red'), Person('red'), Person('red'), Person('red')]
-blueTeam = [Person('blue'), Person('blue'), Person('blue')]
+redTeam = [Person('red'), Person('red'), Person('red'), Person('red'), Person('red'), Person('red')]
+blueTeam = [Person('blue')]
 playerIndex = 0;
 
 while running:
 
-    dude = blueTeam[playerIndex]
+    if 0 > playerIndex >= len(blueTeam):
+        playerIndex = 0
+
+    if not isGameOver:
+        dude = blueTeam[playerIndex]
 
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -271,7 +286,7 @@ while running:
                 if (playerIndex >= len(blueTeam)):
                     playerIndex = 0
 
-        if event.type == pygame.MOUSEBUTTONUP or (event.type == pygame.KEYUP and event.key == pygame.K_SPACE):
+        if not isGameOver and event.type == pygame.MOUSEBUTTONUP or (event.type == pygame.KEYUP and event.key == pygame.K_SPACE):
             mouse_pos = pygame.mouse.get_pos()
             curr_guy = blueTeam[playerIndex]
             dude = blueTeam[playerIndex]
@@ -280,11 +295,12 @@ while running:
     m_left, _, _ = pygame.mouse.get_pressed()
     keys = pygame.key.get_pressed()
 
-    if m_left or keys[pygame.K_SPACE]:
-        dude.isCharging = True
-        dude.chargeThrow(1)
-    else:
-        dude.isCharging = False
+    if not isGameOver:
+        if m_left or keys[pygame.K_SPACE]:
+            dude.isCharging = True
+            dude.chargeThrow(1)
+        else:
+            dude.isCharging = False
 
     for ball in blueSnowballs:
         ball.move()
@@ -292,12 +308,14 @@ while running:
     for ball in redSnowballs:
         ball.move()
 
-    for person in redTeam:
-        person.auto(dt)
-
-    for index, person in enumerate(blueTeam):
-        if (index != playerIndex):
+    if (not isGameOver):
+        for person in redTeam:
             person.auto(dt)
+
+    if not isGameOver:
+        for index, person in enumerate(blueTeam):
+            if (index != playerIndex):
+                person.auto(dt)
 
     for ball in redSnowballs:
         for person in blueTeam:
@@ -316,16 +334,28 @@ while running:
     redTeam = list(filter(lambda x: not x.isDead, redTeam))
     blueTeam = list(filter(lambda x: not x.isDead, blueTeam))
 
-    keys = pygame.key.get_pressed()
-    dude = blueTeam[playerIndex]
-    if keys[pygame.K_w] or keys[pygame.K_UP]:
-        dude.moveUp(dt)
-    if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-        dude.moveDown(dt)
-    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-        dude.moveLeft(dt)
-    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-        dude.moveRight(dt)
+    if len(blueTeam) == 0:
+        isGameOver = True
+        isWinner = False
+
+    if len(redTeam) == 0:
+        isGameOver = True
+        isWinner = True
+
+    if 0 > playerIndex >= len(blueTeam):
+        playerIndex = 0
+
+    if not isGameOver and len(blueTeam) > 0:
+        keys = pygame.key.get_pressed()
+        dude = blueTeam[playerIndex]
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
+            dude.moveUp(dt)
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+            dude.moveDown(dt)
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+            dude.moveLeft(dt)
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            dude.moveRight(dt)
 
     screen.fill("purple")
 
@@ -342,6 +372,15 @@ while running:
         if (index == playerIndex):
             pygame.draw.circle(screen, 'black', person.pos, person.size + 2)
         person.draw()
+
+    if (isGameOver):
+        screen.fill("purple")
+
+        screen.blit(gameOverText, (0,0))
+        if (isWinner):
+            screen.blit(winnerText, (0, 40))
+        else:
+            screen.blit(loserText, (0, 40))
 
 
     # flip() the display to put your work on screen
