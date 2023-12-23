@@ -262,17 +262,31 @@ class Person(Object):
 
 
 
-redTeam = [Person('red'), Person('red'), Person('red'), Person('red'), Person('red'), Person('red')]
-blueTeam = [Person('blue')]
+redTeam = [Person('red')]
+blueTeam = [Person('blue'), Person('blue'), Person('blue')]
 playerIndex = 0;
+lastLevel = 1
+level = 1
+
+snowFall = []
+for i in range(50):
+    x = random.randrange(0, screen.get_width())
+    y = random.randrange(0, screen.get_width())
+    snowFall.append([x, y])
 
 while running:
 
     if 0 > playerIndex >= len(blueTeam):
         playerIndex = 0
 
+    if 0 == len(blueTeam):
+        isGameOver = True
+
     if not isGameOver:
         dude = blueTeam[playerIndex]
+
+    if playerIndex < 0 or playerIndex >= len(blueTeam):
+        playerIndex = 0
 
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -281,7 +295,7 @@ while running:
             running = False
 
         if event.type == pygame.KEYUP:
-            if (event.key == pygame.K_LCTRL):
+            if (event.key == pygame.K_LCTRL or event.key == pygame.K_LSHIFT):
                 playerIndex += 1
                 if (playerIndex >= len(blueTeam)):
                     playerIndex = 0
@@ -334,15 +348,20 @@ while running:
     redTeam = list(filter(lambda x: not x.isDead, redTeam))
     blueTeam = list(filter(lambda x: not x.isDead, blueTeam))
 
-    if len(blueTeam) == 0:
+    if 0 == len(redTeam) and level <= 9:
+        level += 1
+        for i in range(0, level):
+            redTeam.append(Person('red'))
+
+    if len(blueTeam) <= 0:
         isGameOver = True
         isWinner = False
 
-    if len(redTeam) == 0:
+    if len(redTeam) <= 0:
         isGameOver = True
         isWinner = True
 
-    if 0 > playerIndex >= len(blueTeam):
+    if playerIndex < 0 or playerIndex >= len(blueTeam):
         playerIndex = 0
 
     if not isGameOver and len(blueTeam) > 0:
@@ -373,14 +392,27 @@ while running:
             pygame.draw.circle(screen, 'black', person.pos, person.size + 2)
         person.draw()
 
+    for i in range(len(snowFall)):
+        pygame.draw.circle(screen, [255, 255, 255], snowFall[i], 2)
+        snowFall[i][1] += 1
+        if snowFall[i][1] > screen.get_height():
+            y = random.randrange(-50, -10)
+            snowFall[i][1] = y
+
+            x = random.randrange(0, screen.get_width())
+            snowFall[i][0] = x
+
+    levelText = otherFont.render('Level ' + str(level), False, (0, 0, 0))
+    screen.blit(levelText, (0, 0))
+
     if (isGameOver):
         screen.fill("purple")
 
-        screen.blit(gameOverText, (0,0))
+        screen.blit(gameOverText, (100,100))
         if (isWinner):
-            screen.blit(winnerText, (0, 40))
+            screen.blit(winnerText, (100, 140))
         else:
-            screen.blit(loserText, (0, 40))
+            screen.blit(loserText, (100, 140))
 
 
     # flip() the display to put your work on screen
