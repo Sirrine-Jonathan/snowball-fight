@@ -6,7 +6,12 @@
     {
       "label": "python",
       "type": "shell",
-      "command": "python3 main.py"
+      "command": "python main.py"
+    },
+    {
+      "label": "python dev",
+      "type": "shell",
+      "command": "pymon main.py"
     }
   ]
 }
