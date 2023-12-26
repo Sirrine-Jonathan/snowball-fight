@@ -10,11 +10,12 @@ from sprite_strip_anim import SpriteStripAnim
 # pygame setup
 pygame.init()
 pygame.display.set_caption('Snowball Fight')
-screen = pygame.display.set_mode((900, 506))
+screen = pygame.display.set_mode((900, 500))
 clock = pygame.time.Clock()
 running = True
 dt = 0
 isGameOver = False
+bg = pygame.image.load("background.png")
 
 
 pygame.font.init()
@@ -92,16 +93,16 @@ class healthBar():
     height = 5
 
     def draw(self, pos, yOffset, percent):
-        pygame.draw.rect(screen, 'red', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 10), self.width, self.height))
-        pygame.draw.rect(screen, 'green', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 10), self.width * (percent / 100), self.height))
+        pygame.draw.rect(screen, 'red', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 30), self.width, self.height))
+        pygame.draw.rect(screen, 'green', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 30), self.width * (percent / 100), self.height))
 
 class powerBar():
     width = 40
     height = 5
 
     def draw(self, pos, yOffset, percent):
-        pygame.draw.rect(screen, 'black', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 10), self.width, self.height))
-        pygame.draw.rect(screen, 'blue', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 10), self.width * (percent / 100), self.height))
+        pygame.draw.rect(screen, 'black', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 30), self.width, self.height))
+        pygame.draw.rect(screen, 'blue', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 30), self.width * (percent / 100), self.height))
 
 
 redSnowballs = []
@@ -184,33 +185,30 @@ class Person(Object):
         self.x_moving = bool(random.getrandbits(1))
         self.y_moving = bool(random.getrandbits(1))
 
-        ss = spritesheet.spritesheet('snow_guy.png')
-        self.guy_image = ss.image_at((0, 64, 64, 64))
-        self.them_image = ss.image_at((0, 0, 64, 64))
-
-        self.them_anim = SpriteStripAnim('snow_guy.png', (0, 0, 64, 64), 2, None, True, 20)
-        self.guy_anim = SpriteStripAnim('snow_guy.png', (0, 64, 64, 64), 2, None, True, 20)
+        self.them_anim = SpriteStripAnim('snow_guy.png', (0, 0, 64, 64), 2, (0, 255, 0), True, 20)
+        self.guy_anim = SpriteStripAnim('snow_guy.png', (0, 64, 64, 64), 2, (0, 255, 0), True, 20)
 
         self.them_anim.iter()
         self.guy_anim.iter()
 
-    def blit_me(self):
-        screen.blit(self.guy_image, (self.pos.x - 42, self.pos.y - 42))
-
-    def blit_them(self):
-        screen.blit(self.them_image, (self.pos.x - 42, self.pos.y - 42))
-
-    def anim_me(self):
+    def anim_me(self, drawPowerBar = False):
         screen.blit(self.guy_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+        self.healthBar.draw(self.pos, self.size, self.health)
+        if (drawPowerBar):
+            self.powerBar.draw(self.pos, self.size, self.charge)
+        if (self.isCharging):
+            snowball = self.makeSnowball()
+            snowball.drawPlot()
     
     def anim_them(self):
         screen.blit(self.them_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+        self.healthBar.draw(self.pos, self.size, self.health)
     
     def draw(self):
         super().draw()
         self.healthBar.draw(self.pos, self.size, self.health)
         self.powerBar.draw(self.pos, self.size, self.charge)
-        if (self.color == 'blue' and self.isCharging):
+        if (self.isCharging):
             snowball = self.makeSnowball()
             snowball.drawPlot()
 
@@ -372,7 +370,7 @@ while running:
     redTeam = list(filter(lambda x: not x.isDead, redTeam))
     blueTeam = list(filter(lambda x: not x.isDead, blueTeam))
 
-    if 0 == len(redTeam) and level <= 9:
+    if 0 == len(redTeam) and level <= 5:
         level += 1
         for i in range(0, level):
             redTeam.append(Person('red'))
@@ -400,7 +398,7 @@ while running:
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             dude.moveRight(dt)
 
-    screen.fill("purple")
+    screen.blit(bg, (0, 0))
 
     for ball in blueSnowballs:
         ball.draw()
@@ -412,9 +410,7 @@ while running:
         person.anim_them()
 
     for index, person in enumerate(blueTeam):
-        if (index == playerIndex):
-            pygame.draw.circle(screen, 'black', person.pos, person.size + 2)
-        person.anim_me()
+        person.anim_me(index == playerIndex)
 
     for i in range(len(snowFall)):
         pygame.draw.circle(screen, [255, 255, 255], snowFall[i], 2)
