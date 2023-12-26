@@ -4,6 +4,8 @@ import random
 import math
 import random
 
+import spritesheet
+from sprite_strip_anim import SpriteStripAnim
 
 # pygame setup
 pygame.init()
@@ -182,6 +184,28 @@ class Person(Object):
         self.x_moving = bool(random.getrandbits(1))
         self.y_moving = bool(random.getrandbits(1))
 
+        ss = spritesheet.spritesheet('snow_guy.png')
+        self.guy_image = ss.image_at((0, 64, 64, 64))
+        self.them_image = ss.image_at((0, 0, 64, 64))
+
+        self.them_anim = SpriteStripAnim('snow_guy.png', (0, 0, 64, 64), 2, None, True, 20)
+        self.guy_anim = SpriteStripAnim('snow_guy.png', (0, 64, 64, 64), 2, None, True, 20)
+
+        self.them_anim.iter()
+        self.guy_anim.iter()
+
+    def blit_me(self):
+        screen.blit(self.guy_image, (self.pos.x - 42, self.pos.y - 42))
+
+    def blit_them(self):
+        screen.blit(self.them_image, (self.pos.x - 42, self.pos.y - 42))
+
+    def anim_me(self):
+        screen.blit(self.guy_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+    
+    def anim_them(self):
+        screen.blit(self.them_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+    
     def draw(self):
         super().draw()
         self.healthBar.draw(self.pos, self.size, self.health)
@@ -385,12 +409,12 @@ while running:
         ball.draw()
 
     for person in redTeam:
-        person.draw()
+        person.anim_them()
 
     for index, person in enumerate(blueTeam):
         if (index == playerIndex):
             pygame.draw.circle(screen, 'black', person.pos, person.size + 2)
-        person.draw()
+        person.anim_me()
 
     for i in range(len(snowFall)):
         pygame.draw.circle(screen, [255, 255, 255], snowFall[i], 2)
