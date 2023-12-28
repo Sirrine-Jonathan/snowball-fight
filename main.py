@@ -2,175 +2,19 @@
 import pygame
 import random
 import math
+
 import random
-
-import spritesheet
 from sprite_strip_anim import SpriteStripAnim
-
-# pygame setup
-pygame.init()
-pygame.display.set_caption('Snowball Fight')
-screen = pygame.display.set_mode((900, 500))
-clock = pygame.time.Clock()
-running = True
-dt = 0
-isGameOver = False
-bg = pygame.image.load("background.png")
-
-
-pygame.font.init()
-gameOverFont = pygame.font.SysFont('Comic Sans MS', 30)
-otherFont = pygame.font.SysFont('Comic Sans MS', 20)
-gameOverText = gameOverFont.render('Game Over', False, (0, 0, 0))
-winnerText = otherFont.render('You Win', False, (0, 0, 0))
-loserText = otherFont.render('You Lose', False, (0, 0, 0))
-
-class Object:
-    vel = 100
-    x_min = 0
-    x_max = screen.get_width()
-    y_min = 0
-    y_max = screen.get_height()
-
-    def __init__(self, color = 'yellow', size = 15):
-        self.color = color
-        self.size = size;
-        if (color == 'red'):
-            self.pos = self.random_left()
-            self.x_max = screen.get_width() / 2
-        elif (color == 'blue'):
-            self.pos = self.random_right()
-            self.x_min = screen.get_width() / 2
-        else:
-            self.pos = self.random_position()
-
-    def draw(self):
-        pygame.draw.circle(screen, self.color, self.pos, self.size)
-
-    def move(self, x, y, dt):
-        self.pos.x += x * self.vel * dt
-        self.pos.y += y * self.vel * dt
-        return self.adjust_pos()
-
-    def random_position(self):
-        return pygame.Vector2(self.random_x(), self.random_y())
-
-    def random_left(self):
-        return pygame.Vector2(self.random_x('left'), self.random_y())
-
-    def random_right(self):
-        return pygame.Vector2(self.random_x('right'), self.random_y())
-
-    def random_x(self, place):
-        if (place == 'left'):
-            return random.uniform(0 + (self.size / 2), (screen.get_width() / 2) - (self.size / 2))
-        elif (place == 'right'):
-            return random.uniform((screen.get_width() / 2) + (self.size / 2), screen.get_width() - (self.size / 2))
-        else:
-            return random.uniform(0 + (self.size / 2), screen.get_width() - (self.size / 2))
-
-    def random_y(self):
-        return random.uniform(0 + (self.size / 2), screen.get_height() - (self.size / 2))
-
-    def adjust_pos(self):
-        adjusted = False
-        if self.pos.x < self.x_min + self.size:
-            self.pos.x = self.x_min + self.size
-            adjusted = True
-        if self.pos.x > self.x_max - self.size:
-            self.pos.x = self.x_max - self.size
-            adjusted = True
-        if self.pos.y < self.y_min + self.size:
-            self.pos.y = self.y_min + self.size
-            adjusted = True
-        if self.pos.y > self.y_max - self.size:
-            self.pos.y = self.y_max - self.size
-            adjusted = True
-        return adjusted
-
-class healthBar():
-    width = 40
-    height = 5
-
-    def draw(self, pos, yOffset, percent):
-        pygame.draw.rect(screen, 'red', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 30), self.width, self.height))
-        pygame.draw.rect(screen, 'green', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + 30), self.width * (percent / 100), self.height))
-
-class powerBar():
-    width = 40
-    height = 5
-
-    def draw(self, pos, yOffset, percent):
-        pygame.draw.rect(screen, 'black', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 30), self.width, self.height))
-        pygame.draw.rect(screen, 'blue', pygame.Rect(pos.x - (self.width / 2), pos.y - (yOffset + self.height + 30), self.width * (percent / 100), self.height))
-
-
-redSnowballs = []
-blueSnowballs = []
-
-
-def isHit(obj1, obj2):
-    dist = math.hypot(obj1.pos.x - obj2.pos.x, obj1.pos.y - obj2.pos.y)
-    return dist <= (obj1.size) + (obj2.size)
-
-class Snowball(Object):
-    damage = 10
-    gravity = 1
-    speed_hor = 10
-    speed_ver = 7
-    isDead = False
-    isEnemy = 'enemy'
-    plot = []
-    size = 8
-    color = 'white'
-
-    def __init__(self, x, y, vel, dieY = False, isRed = False):
-        self.pos = pygame.Vector2(x, y)
-        self.start_pos = pygame.Vector2(x + 1, y)
-        self.speed_hor = self.speed_hor + vel
-        self.speed_ver = self.speed_hor + (vel / 2)
-        self.isRed = isRed
-        if dieY == False:
-            self.dieY = self.start_pos.y
-        else:
-            self.dieY = dieY
-
-    def draw(self):
-        pygame.draw.circle(screen, self.color, self.pos, self.size)
-
-    def move(self):
-        if (self.isRed):
-            self.pos.x += self.speed_hor
-        else:
-            self.pos.x -= self.speed_hor
-        self.pos.y -= self.speed_ver
-        self.speed_ver -= self.gravity
-        self.plot.append(pygame.Vector2(self.pos.x, self.pos.y))
-        if (self.speed_ver > 14):
-            self.damage += 5;
-        elif (self.speed_ver > 15):
-            self.damage += 20;
-        if (self.pos.y > self.dieY):
-            self.isDead = True
-            return False
-        else:
-            return True
-
-    def drawPlot(self):
-        self.plot = []
-        while (self.move()):
-            pass
-        for pos in self.plot:
-            pygame.draw.circle(screen, 'grey', pos, self.size / 2)
-
-
+from object import Object
+from healthbar import HealthBar
+from powerbar import PowerBar
+from snowball import SnowBall
 
 class Person(Object):
     vel = 75
     health = 100
     charge = 0
-    healthBar = healthBar()
-    powerBar = powerBar()
+
     isDead = False
     isCharging = False
     check_count = 0
@@ -178,8 +22,10 @@ class Person(Object):
     max_check = initial_max_check
     throw_check = random.randrange(30, 90, 10)
 
-    def __init__(self, color = 'red', size = 15):
-        super().__init__(color, size)
+    def __init__(self, surface, color = 'red', size = 15):
+        super().__init__(surface, color, size)
+        self.healthBar = HealthBar(surface)
+        self.powerBar = PowerBar(surface)
         self.x_left = bool(random.getrandbits(1))
         self.y_up = bool(random.getrandbits(1))
         self.x_moving = bool(random.getrandbits(1))
@@ -192,7 +38,7 @@ class Person(Object):
         self.guy_anim.iter()
 
     def anim_me(self, drawPowerBar = False):
-        screen.blit(self.guy_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+        self.surface.blit(self.guy_anim.next(), (self.pos.x - 42, self.pos.y - 42))
         self.healthBar.draw(self.pos, self.size, self.health)
         if (drawPowerBar):
             self.powerBar.draw(self.pos, self.size, self.charge)
@@ -201,7 +47,7 @@ class Person(Object):
             snowball.drawPlot()
     
     def anim_them(self):
-        screen.blit(self.them_anim.next(), (self.pos.x - 42, self.pos.y - 42))
+        self.surface.blit(self.them_anim.next(), (self.pos.x - 42, self.pos.y - 42))
         self.healthBar.draw(self.pos, self.size, self.health)
     
     def draw(self):
@@ -232,7 +78,7 @@ class Person(Object):
         isRed = self.color == 'red'
         if (not isRed):
             x += self.size
-        return Snowball(x, y, charge, yDie, isRed)
+        return SnowBall(self.surface, x, y, charge, yDie, isRed)
 
     def chargeThrow(self, chargeAmount):
         self.charge += chargeAmount
@@ -282,11 +128,31 @@ class Person(Object):
         if (self.check_count % 50 == 0 and random.getrandbits(1)):
             self.throw()
 
+# pygame setup
+pygame.init()
+pygame.display.set_caption('Snowball Fight')
+screen = pygame.display.set_mode((900, 500))
+clock = pygame.time.Clock()
+running = True
+dt = 0
+isGameOver = False
+bg = pygame.image.load("background.png")
+pygame.font.init()
+gameOverFont = pygame.font.SysFont('Comic Sans MS', 30)
+otherFont = pygame.font.SysFont('Comic Sans MS', 20)
+gameOverText = gameOverFont.render('Game Over', False, (0, 0, 0))
+winnerText = otherFont.render('You Win', False, (0, 0, 0))
+loserText = otherFont.render('You Lose', False, (0, 0, 0))
+redSnowballs = []
+blueSnowballs = []
 
+def isHit(obj1, obj2):
+    dist = math.hypot(obj1.pos.x - obj2.pos.x, obj1.pos.y - obj2.pos.y)
+    return dist <= (obj1.size) + (obj2.size)
 
-redTeam = [Person('red')]
-blueTeam = [Person('blue'), Person('blue'), Person('blue')]
-playerIndex = 0;
+redTeam = [Person(screen, 'red')]
+blueTeam = [Person(screen, 'blue'), Person(screen, 'blue'), Person(screen, 'blue')]
+playerIndex = 0
 lastLevel = 1
 level = 1
 
