@@ -2,7 +2,6 @@
 import pygame
 import random
 import math
-
 import random
 from sprite_strip_anim import SpriteStripAnim
 from object import Object
