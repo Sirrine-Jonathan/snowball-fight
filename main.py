@@ -238,7 +238,7 @@ while running:
     if 0 == len(redTeam) and level <= 5:
         level += 1
         for i in range(0, level):
-            redTeam.append(Person('red'))
+            redTeam.append(Person(screen, 'red'))
 
     if len(blueTeam) <= 0:
         isGameOver = True
