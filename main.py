@@ -163,6 +163,7 @@ for i in range(50):
 
 while running:
 
+    # Wrap player switching
     if 0 > playerIndex >= len(blueTeam):
         playerIndex = 0
 
@@ -192,6 +193,7 @@ while running:
             curr_guy = blueTeam[playerIndex]
             dude = blueTeam[playerIndex]
             dude.throw()
+            dude.isCharging = False
 
     m_left, _, _ = pygame.mouse.get_pressed()
     keys = pygame.key.get_pressed()
@@ -199,9 +201,6 @@ while running:
     if not isGameOver:
         if m_left or keys[pygame.K_SPACE]:
             dude.isCharging = True
-            dude.chargeThrow(1)
-        else:
-            dude.isCharging = False
 
     for ball in blueSnowballs:
         ball.move()
@@ -254,14 +253,19 @@ while running:
     if not isGameOver and len(blueTeam) > 0:
         keys = pygame.key.get_pressed()
         dude = blueTeam[playerIndex]
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
+        if keys[pygame.K_w]:
             dude.moveUp(dt)
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+        if keys[pygame.K_s]:
             dude.moveDown(dt)
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             dude.moveLeft(dt)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             dude.moveRight(dt)
+
+        if keys[pygame.K_UP]:
+            dude.chargeThrow(1)
+        if keys[pygame.K_DOWN]:
+            dude.chargeThrow(-1)
 
     screen.blit(bg, (0, 0))
 
